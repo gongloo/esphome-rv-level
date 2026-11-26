@@ -1,0 +1,183 @@
+# ==============================================================================
+# ESPHome RV Level - Reusable Package
+# Provides 6-axis IMU leveling (LSM6DSOX), calibration controls, and 3D PWA
+# ==============================================================================
+
+substitutions:
+  web_host_component_source: "github://gongloo/esphome-web-host@v3.1.0"
+  imu_address: "0x6A"
+  imu_update_interval: "100ms"
+  imu_axis_x: "-x"
+  imu_axis_y: "z"
+  imu_axis_z: "y"
+  motion_threshold: "0.05"
+  motion_duration: "5s"
+  default_wheelbase_in: "159.0"
+  default_track_width_in: "71.0"
+
+esphome:
+  min_version: 2026.11.0
+
+external_components:
+  - source: ${web_host_component_source}
+    id: "web_host_component"
+    components: [web_host, pwa_host]
+
+pwa_host:
+  - id: rv_level_pwa
+    name: "RV Level"
+    short_name: "RV Level"
+    start_url: "level"
+    orientation: "any"
+    theme_color: "#070E1B"
+    background_color: "#070E1B"
+    icons:
+      - id: web_level_apple_icon
+        file: "data/htdocs/apple-touch-icon.png"
+        url: "/apple-touch-icon.png"
+        sizes: "180x180"
+        purpose: "any"
+    sources:
+      - files:
+          - id: web_level_page
+            file: "data/htdocs/level.html"
+            url: "/level"
+            aliases: ["level.html"]
+          - id: web_level_favicon
+            file: "data/htdocs/favicon.svg"
+            url: "/favicon.svg"
+          - id: web_level_van_model
+            file: "data/htdocs/ProMaster_2015_White_meshopt.glb"
+            url: "/ProMaster_2015_White_meshopt.glb"
+            content_type: "model/gltf-binary"
+            strategy: stale_while_revalidate
+      - source:
+          type: git
+          url: https://github.com/zeux/meshoptimizer.git
+          ref: v1.3
+          path: js
+        files:
+          - id: web_level_meshopt_decoder
+            file: "meshopt_decoder_reference.js"
+            url: "/meshopt_decoder.js"
+            strategy: stale_while_revalidate
+
+motion:
+  - platform: lsm6ds
+    id: van_imu
+    address: ${imu_address}
+    update_interval: ${imu_update_interval}
+    accelerometer_range: 2G
+    accelerometer_odr: 52HZ
+    gyroscope_odr: "OFF"
+    axis_map:
+      x: ${imu_axis_x}
+      y: ${imu_axis_y}
+      z: ${imu_axis_z}
+
+binary_sensor:
+  - platform: motion
+    motion_id: van_imu
+    type: moving
+    id: van_moving
+    name: "Van Moving"
+    device_class: moving
+    threshold: ${motion_threshold}
+    duration: ${motion_duration}
+
+sensor:
+  - platform: motion
+    motion_id: van_imu
+    type: pitch
+    id: van_pitch
+    name: "Van Pitch"
+    accuracy_decimals: 2
+    filters:
+      - sliding_window_moving_average:
+          window_size: 8
+          send_every: 3
+      - or:
+          - delta: 0.05
+          - throttle: 30s
+
+  - platform: motion
+    motion_id: van_imu
+    type: roll
+    id: van_roll
+    name: "Van Roll"
+    accuracy_decimals: 2
+    filters:
+      - multiply: -1.0
+      - sliding_window_moving_average:
+          window_size: 8
+          send_every: 3
+      - or:
+          - delta: 0.05
+          - throttle: 30s
+
+  - platform: lsm6ds
+    lsm6ds_id: van_imu
+    id: van_imu_temperature
+    name: "IMU Temperature"
+    entity_category: "diagnostic"
+    filters:
+      - throttle_average: 30s
+      - or:
+          - delta: 0.2
+          - throttle: 300s
+
+button:
+  - platform: template
+    id: btn_calibrate_van_level
+    name: "Calibrate Van Level"
+    icon: "mdi:spirit-level"
+    entity_category: "config"
+    on_press:
+      - motion.calibrate_level:
+          id: van_imu
+          save: true
+          on_success:
+            - logger.log: "Van level calibration saved to NVS"
+          on_error:
+            - logger.log:
+                level: WARN
+                format: "Van level calibration failed"
+
+  - platform: template
+    id: btn_clear_van_level_cal
+    name: "Reset Van Level Calibration"
+    icon: "mdi:restore"
+    entity_category: "config"
+    on_press:
+      - motion.clear_calibration:
+          id: van_imu
+          save: true
+
+number:
+  - platform: template
+    id: rv_wheelbase
+    name: "Wheelbase"
+    icon: "mdi:arrow-left-right"
+    entity_category: "config"
+    unit_of_measurement: "in"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: ${default_wheelbase_in}
+    min_value: 60.0
+    max_value: 300.0
+    step: 0.5
+
+  - platform: template
+    id: rv_track_width
+    name: "Track Width"
+    icon: "mdi:arrow-expand-horizontal"
+    entity_category: "config"
+    unit_of_measurement: "in"
+    mode: box
+    optimistic: true
+    restore_value: true
+    initial_value: ${default_track_width_in}
+    min_value: 40.0
+    max_value: 120.0
+    step: 0.5

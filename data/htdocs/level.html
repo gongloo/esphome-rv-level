@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#070E1B">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RV Level">
+  <title>RV Level</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root {
+      color-scheme: dark;
+
+      --bg-canvas: #070E1B;
+      --bg-surface: rgba(15, 25, 41, 0.78);
+      --bg-surface-strong: rgba(15, 25, 41, 0.94);
+      --border-subtle: rgba(148, 163, 184, 0.14);
+      --border-strong: rgba(148, 163, 184, 0.28);
+
+      --txt-primary: #F1F5F9;
+      --txt-secondary: #94A3B8;
+      --txt-muted: #64748B;
+
+      --col-level: #10E79D;
+      --col-teal: #2DD4BF;
+      --col-warn: #F59E0B;
+      --col-danger: #EF4444;
+      --col-accent: var(--col-teal);
+      --col-accent-rgb: 45, 212, 191;
+
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-pill: 999px;
+
+      accent-color: var(--col-teal);
+      scrollbar-color: #334155 #070E1B;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      inline-size: 100%;
+      block-size: 100dvh;
+      background-color: var(--bg-canvas);
+      color: var(--txt-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      overflow: clip;
+      overscroll-behavior: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      container: app / inline-size;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .app-shell {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(210px, 1fr) auto;
+      grid-template-columns: 1fr;
+      inline-size: 100%;
+      block-size: 100dvh;
+      padding-block-start: calc(env(safe-area-inset-top, 0px) + 0.45rem);
+      padding-block-end: calc(env(safe-area-inset-bottom, 0px) + 0.65rem);
+      padding-inline-start: calc(env(safe-area-inset-left, 0px) + 0.75rem);
+      padding-inline-end: calc(env(safe-area-inset-right, 0px) + 0.75rem);
+      gap: 0.6rem;
+      background:
+        radial-gradient(ellipse 80% 55% at 50% 25%, rgba(var(--col-accent-rgb), 0.11), transparent 72%),
+        var(--bg-canvas);
+      transition: background 0.5s ease;
+    }
+
+    /* Header Bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      z-index: 5;
+      min-block-size: 40px;
+    }
+
+    .brand-container {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      cursor: pointer;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
+
+    .brand-icon {
+      inline-size: 28px;
+      block-size: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(16, 231, 157, 0.08));
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      display: grid;
+      place-items: center;
+      color: var(--col-teal);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: clamp(1.02rem, 0.92rem + 0.6cqi, 1.28rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--txt-primary);
+      line-height: 1.15;
+    }
+
+    .brand-sub {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--txt-muted);
+      letter-spacing: 0.01em;
+    }
+
+    .version-drawer {
+      position: absolute;
+      inset-block-start: calc(100% + 4px);
+      inset-inline-start: 36px;
+      background: var(--bg-surface-strong);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 0.22rem 0.55rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--col-teal);
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+
+    .brand-container.show-version .version-drawer {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .conn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.38rem;
+      padding: 0.34rem 0.68rem;
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--txt-secondary);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .conn-dot {
+      inline-size: 7px;
+      block-size: 7px;
+      border-radius: 50%;
+      background: var(--txt-muted);
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .conn-pill.live .conn-dot {
+      background: var(--col-level);
+      color: var(--col-level);
+    }
+
+    .conn-pill.warn .conn-dot {
+      background: var(--col-warn);
+      color: var(--col-warn);
+    }
+
+    .conn-pill.demo .conn-dot {
+      background: #38BDF8;
+      color: #38BDF8;
+    }
+
+    .icon-btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      inline-size: 36px;
+      block-size: 36px;
+      border-radius: 11px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--txt-secondary);
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.12s ease;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.94);
+    }
+
+    .icon-btn:hover {
+      color: var(--txt-primary);
+      border-color: var(--border-strong);
+    }
+
+    /* 3D WebGL Stage */
+    .stage-card {
+      container: stage / inline-size;
+      position: relative;
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at 50% 45%, rgba(18, 33, 58, 0.72) 0%, rgba(7, 14, 27, 0.92) 78%);
+      border: 1px solid var(--border-subtle);
+      overflow: clip;
+      min-block-size: 0;
+      min-inline-size: 0;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    #van-canvas {
+      display: block;
+      inline-size: 100%;
+      block-size: 100%;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      cursor: grab;
+    }
+
+    #van-canvas:active {
+      cursor: grabbing;
+    }
+
+    .stage-overlay-top {
+      position: absolute;
+      inset-block-start: 0.65rem;
+      inset-inline: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      gap: 0.5rem;
+      z-index: 4;
+    }
+
+    .pill-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      pointer-events: auto;
+    }
+
+    .hud-pill {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: var(--radius-pill);
+      background: rgba(7, 14, 27, 0.74);
+      border: 1px solid var(--border-strong);
+      color: var(--txt-secondary);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .hud-pill strong {
+      color: var(--col-accent);
+    }
+
+    .hud-pill.actionable {
+      cursor: pointer;
+      color: var(--txt-primary);
+      border-color: rgba(45, 212, 191, 0.48);
+      background: rgba(15, 34, 54, 0.85);
+      transition: transform 0.12s ease, opacity 0.2s ease;
+    }
+
+    .hud-pill.actionable:active {
+      transform: scale(0.95);
+    }
+
+    .hud-pill.moving-badge {
+      border-color: rgba(245, 158, 11, 0.65);
+      color: var(--col-warn);
+      background: rgba(69, 39, 9, 0.72);
+      animation: pulseBadge 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulseBadge {
+      0%, 100% { opacity: 0.78; }
+      50% { opacity: 1; }
+    }
+
+    .stage-overlay-bottom {
+      position: absolute;
+      inset-block-end: 0.55rem;
+      inset-inline: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .stage-hint {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: rgba(148, 163, 184, 0.68);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .lowest-tag {
+      margin-inline-start: auto;
+      padding: 0.26rem 0.62rem;
+      border-radius: var(--radius-pill);
+      background: rgba(7, 14, 27, 0.78);
+      border: 1px solid rgba(var(--col-accent-rgb), 0.38);
+      color: var(--col-accent);
+      font-size: 0.72rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+
+    @container stage (inline-size < 450px) {
+      .stage-hint {
+        display: none;
+      }
+    }
+
+    .webgl-fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--txt-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Telemetry HUD Deck */
+    .hud-panel {
+      display: grid;
+      gap: 0.55rem;
+      min-inline-size: 0;
+      z-index: 5;
+    }
+
+    .glass-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.72rem 0.85rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* Status Summary Banner */
+    .status-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-color: rgba(var(--col-accent-rgb), 0.42);
+      transition: border-color 0.35s ease;
+    }
+
+    .status-main {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-inline-size: 0;
+    }
+
+    .status-indicator {
+      inline-size: 36px;
+      block-size: 36px;
+      border-radius: 11px;
+      background: rgba(var(--col-accent-rgb), 0.14);
+      border: 1px solid rgba(var(--col-accent-rgb), 0.35);
+      display: grid;
+      place-items: center;
+      color: var(--col-accent);
+      flex-shrink: 0;
+      transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .status-copy {
+      min-inline-size: 0;
+    }
+
+    .status-title {
+      font-size: clamp(0.98rem, 0.88rem + 0.5cqi, 1.15rem);
+      font-weight: 700;
+      color: var(--txt-primary);
+      line-height: 1.15;
+    }
+
+    .status-sub {
+      font-size: 0.76rem;
+      font-weight: 500;
+      color: var(--txt-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-block-start: 2px;
+    }
+
+    /* Pitch & Roll Row */
+    .angles-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    .metric-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding: 0.62rem 0.8rem;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .metric-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.69rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--txt-muted);
+    }
+
+    .metric-dir {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+      color: var(--txt-secondary);
+    }
+
+    .metric-val {
+      font-size: clamp(1.38rem, 1.12rem + 1.4cqi, 1.95rem);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--col-accent);
+      transition: color 0.3s ease;
+    }
+
+    /* 4-Wheel Lift Matrix */
+    .wheels-card {
+      padding: 0.62rem 0.75rem;
+      border-radius: var(--radius-lg);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .wheels-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-block-end: 0.45rem;
+      font-size: 0.69rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--txt-muted);
+    }
+
+    .wheels-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.42rem;
+    }
+
+    .wheel-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      padding: 0.42rem 0.62rem;
+      border-radius: 10px;
+      background: rgba(7, 14, 27, 0.62);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      transition: border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .wheel-cell.lowest {
+      border-color: rgba(245, 158, 11, 0.72);
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .wheel-cell.lowest.severe {
+      border-color: rgba(239, 68, 68, 0.76);
+      background: rgba(239, 68, 68, 0.14);
+    }
+
+    .wheel-cell.zero {
+      border-color: rgba(16, 231, 157, 0.28);
+    }
+
+    .wheel-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--txt-secondary);
+    }
+
+    .wheel-lift {
+      font-size: 0.88rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--txt-primary);
+    }
+
+    .wheel-cell.lowest .wheel-lift {
+      color: var(--col-warn);
+    }
+
+    .wheel-cell.lowest.severe .wheel-lift {
+      color: var(--col-danger);
+    }
+
+    .wheel-cell.zero .wheel-lift {
+      color: var(--col-level);
+    }
+
+    /* Demo Drawer (?demo=1 only) */
+    .demo-panel {
+      display: grid;
+      gap: 0.45rem;
+      padding: 0.65rem 0.78rem;
+      border-radius: var(--radius-md);
+      background: rgba(12, 22, 42, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .demo-panel[hidden] {
+      display: none;
+    }
+
+    .demo-row {
+      display: grid;
+      grid-template-columns: 54px 1fr 48px;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.74rem;
+      color: var(--txt-secondary);
+    }
+
+    .demo-row input[type="range"] {
+      inline-size: 100%;
+    }
+
+    .demo-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .demo-btn {
+      appearance: none;
+      padding: 0.26rem 0.55rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: rgba(30, 41, 59, 0.72);
+      color: var(--txt-primary);
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Desktop & Landscape iPhone Container Query */
+    @container app (inline-size >= 760px) {
+      .app-shell {
+        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) clamp(296px, 34cqi, 368px);
+        gap: 0.75rem;
+      }
+
+      .topbar {
+        grid-column: 1 / -1;
+      }
+
+      .stage-card {
+        grid-column: 1;
+        grid-row: 2;
+        min-block-size: 0;
+      }
+
+      .hud-panel {
+        grid-column: 2;
+        grid-row: 2;
+        min-block-size: 0;
+        max-block-size: 100%;
+        align-content: start;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+        overscroll-behavior: contain;
+      }
+    }
+
+    /* Calibration Native Dialog */
+    dialog.cal-dialog {
+      margin: auto;
+      inline-size: min(92dvw, 390px);
+      background: #0F1929;
+      color: var(--txt-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 1.2rem;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
+
+    dialog.cal-dialog::backdrop {
+      background: rgba(4, 9, 18, 0.74);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .cal-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-block-end: 0.45rem;
+    }
+
+    .cal-desc {
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--txt-secondary);
+      margin-block-end: 0.85rem;
+    }
+
+    .cal-warning {
+      padding: 0.55rem 0.72rem;
+      border-radius: 10px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #FCD34D;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      margin-block-end: 1rem;
+    }
+
+    .cal-actions {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.68rem 1rem;
+      border-radius: 11px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: rgba(30, 41, 59, 0.75);
+      color: var(--txt-primary);
+      transition: transform 0.12s ease, background 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0D9488, #10B981);
+      border-color: rgba(16, 231, 157, 0.45);
+      color: #041311;
+      font-weight: 700;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.38);
+      color: #FCA5A5;
+    }
+
+    .cal-feedback {
+      margin-block-start: 0.65rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--col-level);
+      min-block-size: 1.1em;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hud-pill.moving-badge {
+        animation: none;
+      }
+
+      .app-shell,
+      .status-card,
+      .metric-val,
+      .wheel-cell {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-container" id="brand-btn" role="button" tabindex="0" aria-label="Show firmware version">
+        <div class="brand-row">
+          <div class="brand-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">RV Level</div>
+            <div class="brand-sub">3D Leveling Assistant</div>
+          </div>
+        </div>
+        <div class="version-drawer" id="version-drawer">v${version}</div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="conn-pill" id="conn-pill">
+          <span class="conn-dot"></span>
+          <span id="conn-label">Connecting</span>
+        </div>
+        <button type="button" class="icon-btn" id="open-cal-btn" title="Level Calibration"
+          aria-label="Open level calibration">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="8" width="20" height="8" rx="2" />
+            <line x1="9" y1="8" x2="9" y2="16" />
+            <line x1="15" y1="8" x2="15" y2="16" />
+            <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="stage-card" aria-label="3D RV Level Visualization">
+      <canvas id="van-canvas"></canvas>
+      <div class="stage-overlay-top">
+        <div class="pill-group">
+          <span class="hud-pill">Tilt <strong>5&times;</strong></span>
+          <span class="hud-pill" id="cam-mode-pill">Auto Top-Down</span>
+          <button type="button" class="hud-pill actionable" id="auto-cam-btn" hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+              <polyline points="3 3 3 8 8 8" />
+            </svg>
+            Reset Auto
+          </button>
+        </div>
+        <span class="hud-pill moving-badge" id="moving-pill" hidden>MOVING</span>
+      </div>
+      <div class="stage-overlay-bottom">
+        <div class="stage-hint" id="stage-hint">Drag to inspect &bull; Double-tap for Auto</div>
+        <div class="lowest-tag" id="lowest-tag">Within &plusmn;0.5&deg; Dead-Zone</div>
+      </div>
+      <div class="webgl-fallback" id="webgl-fallback" hidden>
+        WebGL is unavailable on this browser; numeric level telemetry remains active below.
+      </div>
+    </main>
+
+    <aside class="hud-panel" aria-label="Leveling Telemetry">
+      <div class="glass-card status-card" id="status-card">
+        <div class="status-main">
+          <div class="status-indicator" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round">
+              <circle cx="12" cy="12" r="8" />
+              <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+              <line x1="12" y1="2" x2="12" y2="5" />
+              <line x1="12" y1="19" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="5" y2="12" />
+              <line x1="19" y1="12" x2="22" y2="12" />
+            </svg>
+          </div>
+          <div class="status-copy">
+            <div class="status-title" id="status-title">Waiting for IMU</div>
+            <div class="status-sub" id="status-sub">Connecting to device...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="angles-grid">
+        <div class="metric-card">
+          <div class="metric-head">
+            <span>Pitch</span>
+            <span class="metric-dir" id="pitch-dir">--</span>
+          </div>
+          <div class="metric-val" id="pitch-val">--.-&deg;</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-head">
+            <span>Roll</span>
+            <span class="metric-dir" id="roll-dir">--</span>
+          </div>
+          <div class="metric-val" id="roll-val">--.-&deg;</div>
+        </div>
+      </div>
+
+      <div class="wheels-card">
+        <div class="wheels-head">
+          <span>Wheel Lift Estimate</span>
+          <span id="wheel-dims">159&Prime; &times; 71&Prime;</span>
+        </div>
+        <div class="wheels-grid">
+          <div class="wheel-cell" id="wheel-fl">
+            <span class="wheel-label">Front Driver</span>
+            <span class="wheel-lift" id="lift-fl">--</span>
+          </div>
+          <div class="wheel-cell" id="wheel-fr">
+            <span class="wheel-label">Front Pass</span>
+            <span class="wheel-lift" id="lift-fr">--</span>
+          </div>
+          <div class="wheel-cell" id="wheel-rl">
+            <span class="wheel-label">Rear Driver</span>
+            <span class="wheel-lift" id="lift-rl">--</span>
+          </div>
+          <div class="wheel-cell" id="wheel-rr">
+            <span class="wheel-label">Rear Pass</span>
+            <span class="wheel-lift" id="lift-rr">--</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-panel" id="demo-panel" hidden>
+        <div class="demo-row">
+          <span>Pitch</span>
+          <input type="range" id="demo-pitch" min="-8" max="8" step="0.1" value="1.1">
+          <span id="demo-pitch-out">+1.1&deg;</span>
+        </div>
+        <div class="demo-row">
+          <span>Roll</span>
+          <input type="range" id="demo-roll" min="-8" max="8" step="0.1" value="3.2">
+          <span id="demo-roll-out">+3.2&deg;</span>
+        </div>
+        <div class="demo-presets">
+          <button type="button" class="demo-btn" data-p="0" data-r="0">Level</button>
+          <button type="button" class="demo-btn" data-p="1.1" data-r="3.2">Rear-Driver Low</button>
+          <button type="button" class="demo-btn" data-p="2.4" data-r="-2.6">Rear-Pass Low</button>
+          <button type="button" class="demo-btn" data-p="-2.8" data-r="2.1">Front-Driver Low</button>
+          <button type="button" class="demo-btn" data-p="-2.5" data-r="-2.5">Front-Pass Low</button>
+          <button type="button" class="demo-btn" id="demo-moving-btn">Moving: Off</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <dialog class="cal-dialog" id="cal-dialog" aria-labelledby="cal-heading">
+    <h2 class="cal-title" id="cal-heading">Level Calibration</h2>
+    <p class="cal-desc">
+      Zeroes the onboard IMU pitch &amp; roll offsets to match your vehicle's resting stance and saves them to NVS flash.
+    </p>
+    <div class="cal-warning">
+      Verify the vehicle is stationary and sitting physically level (e.g. checked with a carpenter's level on the floor)
+      before saving a new zero reference.
+    </div>
+    <div class="cal-actions">
+      <button type="button" class="btn btn-primary" id="btn-cal-save">Set Current Stance as Level</button>
+      <button type="button" class="btn btn-danger" id="btn-cal-reset">Reset Factory Calibration</button>
+      <button type="button" class="btn" id="btn-cal-close">Close</button>
+    </div>
+    <div class="cal-feedback" id="cal-feedback"></div>
+  </dialog>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // =========================================================================
+      // Constants & Configuration
+      // =========================================================================
+      const DEG2RAD = Math.PI / 180;
+      const EXAGGERATION = 5.0;
+      const MAX_VIS_TILT_DEG = 32.0;
+      const DEADZONE_DEG = 0.5;
+      const FULL_TILT_DEG = 3.0;
+      const CAM_TOP_DOWN_ELEV_DEG = 84.0;   // Camera elevation when level (top-down)
+      const CAM_MIN_TILT_ELEV_DEG = 10.0;   // Lowest auto-camera elevation when tilted (degrees above horizontal)
+      const CAM_MANUAL_MIN_ELEV_DEG = 3.0;  // Lowest elevation allowed during manual drag
+      const CAM_TOP_DOWN_TARGET_Y = 0.95;   // Look-at target height when level (meters)
+      const CAM_MIN_TILT_TARGET_Y = 0.78;   // Look-at target height at lowest tilted POV (meters)
+      const DEFAULT_WHEELBASE_IN = 159.0;
+      const DEFAULT_TRACK_WIDTH_IN = 71.0;
+
+      const query = new URLSearchParams(window.location.search);
+      const isDemo = query.get('demo') === '1' || query.get('demo') === 'true';
+
+      const basePath = (() => {
+        const p = window.location.pathname;
+        return p.substring(0, p.lastIndexOf('/') + 1) || '/';
+      })();
+
+      if (!isDemo && window.isSecureContext && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+
+      // =========================================================================
+      // Minimal Matrix / Vector Math Helpers
+      // =========================================================================
+      function clamp(v, lo, hi) {
+        return v < lo ? lo : v > hi ? hi : v;
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function smoothstep(edge0, edge1, x) {
+        const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+        return t * t * (3 - 2 * t);
+      }
+
+      function wrapAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+      }
+
+      function mat4Mul(a, b) {
+        const out = new Float32Array(16);
+        for (let c = 0; c < 4; c++) {
+          const b0 = b[c * 4], b1 = b[c * 4 + 1], b2 = b[c * 4 + 2], b3 = b[c * 4 + 3];
+          out[c * 4]     = a[0] * b0 + a[4] * b1 + a[8] * b2 + a[12] * b3;
+          out[c * 4 + 1] = a[1] * b0 + a[5] * b1 + a[9] * b2 + a[13] * b3;
+          out[c * 4 + 2] = a[2] * b0 + a[6] * b1 + a[10] * b2 + a[14] * b3;
+          out[c * 4 + 3] = a[3] * b0 + a[7] * b1 + a[11] * b2 + a[15] * b3;
+        }
+        return out;
+      }
+
+      function mat4Perspective(fovy, aspect, near, far) {
+        const f = 1.0 / Math.tan(fovy * 0.5);
+        const nf = 1 / (near - far);
+        const out = new Float32Array(16);
+        out[0] = f / aspect;
+        out[5] = f;
+        out[10] = (far + near) * nf;
+        out[11] = -1;
+        out[14] = 2 * far * near * nf;
+        return out;
+      }
+
+      function mat4LookAt(eye, target, up) {
+        let zx = eye[0] - target[0], zy = eye[1] - target[1], zz = eye[2] - target[2];
+        let zlen = Math.hypot(zx, zy, zz) || 1;
+        zx /= zlen; zy /= zlen; zz /= zlen;
+
+        let xx = up[1] * zz - up[2] * zy;
+        let xy = up[2] * zx - up[0] * zz;
+        let xz = up[0] * zy - up[1] * zx;
+        let xlen = Math.hypot(xx, xy, xz) || 1;
+        xx /= xlen; xy /= xlen; xz /= xlen;
+
+        const yx = zy * xz - zz * xy;
+        const yy = zz * xx - zx * xz;
+        const yz = zx * xy - zy * xx;
+
+        const out = new Float32Array(16);
+        out[0] = xx; out[4] = xy; out[8] = xz;  out[12] = -(xx * eye[0] + xy * eye[1] + xz * eye[2]);
+        out[1] = yx; out[5] = yy; out[9] = yz;  out[13] = -(yx * eye[0] + yy * eye[1] + yz * eye[2]);
+        out[2] = zx; out[6] = zy; out[10] = zz; out[14] = -(zx * eye[0] + zy * eye[1] + zz * eye[2]);
+        out[15] = 1;
+        return out;
+      }
+
+      // Van attitude matrix: Rz(-rollRad) * Rx(+pitchRad)
+      // +pitch lifts Front (-Z); +roll lifts Driver (-X) / drops Passenger (+X).
+      function mat4Tilt(pitchRad, rollRad) {
+        const cp = Math.cos(pitchRad), sp = Math.sin(pitchRad);
+        const cr = Math.cos(rollRad),  sr = Math.sin(rollRad);
+        const out = new Float32Array(16);
+        out[0] = cr;      out[4] =  sr * cp; out[8]  = -sr * sp;
+        out[1] = -sr;     out[5] =  cr * cp; out[9]  = -cr * sp;
+        out[2] = 0;       out[6] =  sp;      out[10] = cp;
+        out[15] = 1;
+        return out;
+      }
+
+      function transformPoint(m, x, y, z) {
+        return [
+          m[0] * x + m[4] * y + m[8] * z + m[12],
+          m[1] * x + m[5] * y + m[9] * z + m[13],
+          m[2] * x + m[6] * y + m[10] * z + m[14]
+        ];
+      }
+
+      // =========================================================================
+      // Lightweight 3D Mesh Builder (Deck, Gimbal Rings, Beacon)
+      // =========================================================================
+      class MeshBuilder {
+        constructor() {
+          this.pos = [];
+          this.norm = [];
+          this.col = [];
+          this.alpha = [];
+          this.spec = [];
+          this.idx = [];
+          this.vertCount = 0;
+        }
+
+        addTri(a, b, c, color, alpha = 1.0, spec = 0.25, explicitNormal = null) {
+          let nx, ny, nz;
+          if (explicitNormal) {
+            nx = explicitNormal[0]; ny = explicitNormal[1]; nz = explicitNormal[2];
+          } else {
+            const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+            const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+            nx = uy * vz - uz * vy;
+            ny = uz * vx - ux * vz;
+            nz = ux * vy - uy * vx;
+            const len = Math.hypot(nx, ny, nz) || 1;
+            nx /= len; ny /= len; nz /= len;
+          }
+          const base = this.vertCount;
+          const pts = [a, b, c];
+          for (let i = 0; i < 3; i++) {
+            this.pos.push(pts[i][0], pts[i][1], pts[i][2]);
+            this.norm.push(nx, ny, nz);
+            this.col.push(color[0], color[1], color[2]);
+            this.alpha.push(alpha);
+            this.spec.push(spec);
+          }
+          this.idx.push(base, base + 1, base + 2);
+          this.vertCount += 3;
+        }
+
+        // Quad with vertices ordered CCW when viewed from outside
+        addQuad(a, b, c, d, color, alpha = 1.0, spec = 0.25) {
+          this.addTri(a, b, c, color, alpha, spec);
+          this.addTri(a, c, d, color, alpha, spec);
+        }
+
+        // Smooth double-sided quad ribbon
+        addDoubleQuad(a, b, c, d, color, alpha = 1.0, spec = 0.1) {
+          this.addQuad(a, b, c, d, color, alpha, spec);
+          this.addQuad(a, d, c, b, color, alpha, spec);
+        }
+
+        // Axis-aligned box [x0..x1, y0..y1, z0..z1]
+        addBox(x0, x1, y0, y1, z0, z1, color, alpha = 1.0, spec = 0.2) {
+          const p000 = [x0, y0, z0], p100 = [x1, y0, z0], p110 = [x1, y1, z0], p010 = [x0, y1, z0];
+          const p001 = [x0, y0, z1], p101 = [x1, y0, z1], p111 = [x1, y1, z1], p011 = [x0, y1, z1];
+          this.addQuad(p000, p010, p110, p100, color, alpha, spec); // -Z Front
+          this.addQuad(p101, p111, p011, p001, color, alpha, spec); // +Z Rear
+          this.addQuad(p001, p011, p010, p000, color, alpha, spec); // -X Left
+          this.addQuad(p100, p110, p111, p101, color, alpha, spec); // +X Right
+          this.addQuad(p010, p011, p111, p110, color, alpha, spec); // +Y Top
+          this.addQuad(p001, p000, p100, p101, color, alpha, spec); // -Y Bottom
+        }
+      }
+
+      // Parse binary glTF 2.0 (.glb) with EXT_meshopt_compression + KHR_mesh_quantization
+      async function buildGlbVanMesh(buf) {
+        const dv = new DataView(buf);
+        if (dv.getUint32(0, true) !== 0x46546C67 || dv.getUint32(4, true) !== 2) {
+          throw new Error('Invalid GLB header');
+        }
+        const totalLen = dv.getUint32(8, true);
+        let offset = 12, gltf = null, binOffset = 0, binLen = 0;
+        while (offset < totalLen) {
+          const chunkLen = dv.getUint32(offset, true);
+          const chunkType = dv.getUint32(offset + 4, true);
+          const dataStart = offset + 8;
+          if (chunkType === 0x4E4F534A) {
+            gltf = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, dataStart, chunkLen)));
+          } else if (chunkType === 0x004E4942) {
+            binOffset = dataStart;
+            binLen = chunkLen;
+          }
+          offset = dataStart + chunkLen;
+        }
+        if (!gltf || !binLen) throw new Error('Missing GLB chunks');
+
+        // Decode any EXT_meshopt_compression bufferViews
+        const bvs = gltf.bufferViews || [];
+        const hasMeshopt = bvs.some((bv) => bv.extensions && bv.extensions.EXT_meshopt_compression);
+        let meshoptDecoder = null;
+        if (hasMeshopt) {
+          const mod = await import('./meshopt_decoder.js');
+          meshoptDecoder = mod && mod.MeshoptDecoder;
+          if (!meshoptDecoder || !meshoptDecoder.supported) {
+            throw new Error('MeshoptDecoder unavailable');
+          }
+          await meshoptDecoder.ready;
+        }
+        const bvViews = bvs.map((bv) => {
+          const ext = bv.extensions && bv.extensions.EXT_meshopt_compression;
+          if (ext) {
+            const stride = ext.byteStride || 1;
+            const target = new Uint8Array(ext.count * stride);
+            const src = new Uint8Array(buf, binOffset + (ext.byteOffset || 0), ext.byteLength);
+            meshoptDecoder.decodeGltfBuffer(target, ext.count, stride, src, ext.mode, ext.filter || 'NONE');
+            return { dv: new DataView(target.buffer, target.byteOffset, target.byteLength), base: 0 };
+          }
+          return { dv, base: binOffset + (bv.byteOffset || 0) };
+        });
+
+        const linToSrgb = (c) => (c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+        const typeCounts = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
+
+        function readAccessor(accIdx) {
+          const acc = gltf.accessors[accIdx];
+          const bv = bvs[acc.bufferView];
+          const view = bvViews[acc.bufferView];
+          const nComp = typeCounts[acc.type] || 1;
+          const base = view.base + (acc.byteOffset || 0);
+          const ct = acc.componentType;
+          const compBytes = ct === 5126 || ct === 5125 ? 4 : (ct === 5123 || ct === 5122 ? 2 : 1);
+          const stride = bv.byteStride || (nComp * compBytes);
+          const norm = !!acc.normalized;
+          const out = (ct === 5126 || norm)
+            ? new Float32Array(acc.count * nComp)
+            : new Uint32Array(acc.count * nComp);
+          for (let i = 0; i < acc.count; i++) {
+            const p = base + i * stride;
+            for (let k = 0; k < nComp; k++) {
+              const q = p + k * compBytes;
+              let v = 0;
+              if (ct === 5126) v = view.dv.getFloat32(q, true);
+              else if (ct === 5123) { v = view.dv.getUint16(q, true); if (norm) v /= 65535.0; }
+              else if (ct === 5122) { v = view.dv.getInt16(q, true); if (norm) v = Math.max(v / 32767.0, -1.0); }
+              else if (ct === 5125) v = view.dv.getUint32(q, true);
+              else if (ct === 5121) { v = view.dv.getUint8(q); if (norm) v /= 255.0; }
+              else if (ct === 5120) { v = view.dv.getInt8(q); if (norm) v = Math.max(v / 127.0, -1.0); }
+              out[i * nComp + k] = v;
+            }
+          }
+          return out;
+        }
+
+        const pos = [], norm = [], col = [], alpha = [], spec = [], idx = [];
+        let vertCount = 0;
+
+        // Collect all (node, prim) draws and render OPAQUE before BLEND
+        const draws = [];
+        const nodes = gltf.nodes || [];
+        const rootNodes = (gltf.scenes && gltf.scenes[gltf.scene || 0] && gltf.scenes[gltf.scene || 0].nodes) || nodes.map((_, i) => i);
+        function visitNode(nodeIdx, parentT, parentS) {
+          const node = nodes[nodeIdx];
+          if (!node) return;
+          const t = node.translation || [0, 0, 0];
+          const s = node.scale || [1, 1, 1];
+          const curT = [
+            parentT[0] + parentS[0] * t[0],
+            parentT[1] + parentS[1] * t[1],
+            parentT[2] + parentS[2] * t[2]
+          ];
+          const curS = [parentS[0] * s[0], parentS[1] * s[1], parentS[2] * s[2]];
+          if (node.mesh !== undefined) {
+            const mesh = gltf.meshes[node.mesh];
+            for (const prim of (mesh.primitives || [])) {
+              const mat = (prim.material !== undefined && gltf.materials) ? gltf.materials[prim.material] : {};
+              const isBlend = mat.alphaMode === 'BLEND';
+              draws.push({ prim, mat, t: curT, s: curS, order: isBlend ? 1 : 0 });
+            }
+          }
+          for (const child of (node.children || [])) visitNode(child, curT, curS);
+        }
+        for (const ni of rootNodes) visitNode(ni, [0, 0, 0], [1, 1, 1]);
+        draws.sort((a, b) => a.order - b.order);
+
+        for (const { prim, mat, t, s } of draws) {
+          if (!prim.attributes || prim.attributes.POSITION === undefined) continue;
+          const pArr = readAccessor(prim.attributes.POSITION);
+          const nArr = prim.attributes.NORMAL !== undefined ? readAccessor(prim.attributes.NORMAL) : null;
+          const iArr = prim.indices !== undefined ? readAccessor(prim.indices) : null;
+          const pbr = mat.pbrMetallicRoughness || {};
+          const bc = pbr.baseColorFactor || [0.85, 0.89, 0.94, 1.0];
+          const r = linToSrgb(bc[0]), g = linToSrgb(bc[1]), b = linToSrgb(bc[2]);
+          const a = bc[3] !== undefined ? bc[3] : 1.0;
+          const rough = pbr.roughnessFactor !== undefined ? pbr.roughnessFactor : 0.5;
+          const metal = pbr.metallicFactor !== undefined ? pbr.metallicFactor : 0.0;
+          const cc = (mat.extensions && mat.extensions.KHR_materials_clearcoat && mat.extensions.KHR_materials_clearcoat.clearcoatFactor) || 0;
+          const sp = Math.min(1.0, Math.max(0.05, (1.0 - rough) * 0.7 + cc * 0.35 + metal * 0.25));
+
+          const count = pArr.length / 3;
+          const baseVert = vertCount;
+          for (let i = 0; i < count; i++) {
+            // Scale + translate in GLB space, then rotate +90deg around Y: (x, y, z)_glb -> (z, y, -x)_level
+            const gx = pArr[i * 3] * s[0] + t[0];
+            const gy = pArr[i * 3 + 1] * s[1] + t[1];
+            const gz = pArr[i * 3 + 2] * s[2] + t[2];
+            pos.push(gz, gy, -gx);
+
+            if (nArr) {
+              const nx = nArr[i * 3], ny = nArr[i * 3 + 1], nz = nArr[i * 3 + 2];
+              norm.push(nz, ny, -nx);
+            } else {
+              norm.push(0, 1, 0);
+            }
+            col.push(r, g, b);
+            alpha.push(a);
+            spec.push(sp);
+          }
+          if (iArr) {
+            for (let i = 0; i < iArr.length; i++) idx.push(baseVert + iArr[i]);
+          } else {
+            for (let i = 0; i < count; i++) idx.push(baseVert + i);
+          }
+          vertCount += count;
+        }
+
+        return { pos, norm, col, alpha, spec, idx, vertCount };
+      }
+
+      // Build sloped terrain / contact shadow deck tilted with the van
+      function buildTiltedDeckMesh() {
+        const m = new MeshBuilder();
+        const padCol = [0.09, 0.14, 0.23];
+        const rimCol = [0.26, 0.35, 0.48];
+        const hw = 1.48, hzMin = -3.48, hzMax = 3.48;
+        // Sloped deck just under tires
+        m.addDoubleQuad([-hw, -0.02, hzMin], [hw, -0.02, hzMin], [hw, -0.02, hzMax], [-hw, -0.02, hzMax], padCol, 0.55, 0.05);
+        // Subtle border frame strips on tilted deck
+        const t = 0.035;
+        m.addDoubleQuad([-hw, -0.015, hzMin], [hw, -0.015, hzMin], [hw, -0.015, hzMin + t], [-hw, -0.015, hzMin + t], rimCol, 0.7, 0.1);
+        m.addDoubleQuad([-hw, -0.015, hzMax - t], [hw, -0.015, hzMax - t], [hw, -0.015, hzMax], [-hw, -0.015, hzMax], rimCol, 0.7, 0.1);
+        m.addDoubleQuad([-hw, -0.015, hzMin], [-hw + t, -0.015, hzMin], [-hw + t, -0.015, hzMax], [-hw, -0.015, hzMax], rimCol, 0.7, 0.1);
+        m.addDoubleQuad([hw - t, -0.015, hzMin], [hw, -0.015, hzMin], [hw, -0.015, hzMax], [hw - t, -0.015, hzMax], rimCol, 0.7, 0.1);
+        return m;
+      }
+
+      // Build stationary true-horizontal (0°) level reference gimbal rings + nose pointer
+      function buildLevelGridMesh() {
+        const m = new MeshBuilder();
+        const ringCol = [1.0, 1.0, 1.0]; // Tinted via uTintColor uniform!
+
+        function addRing(radius, thick, alpha) {
+          const segs = 72;
+          const rIn = radius - thick * 0.5, rOut = radius + thick * 0.5;
+          for (let i = 0; i < segs; i++) {
+            const a0 = (i / segs) * Math.PI * 2;
+            const a1 = ((i + 1) / segs) * Math.PI * 2;
+            const c0 = Math.cos(a0), s0 = Math.sin(a0);
+            const c1 = Math.cos(a1), s1 = Math.sin(a1);
+            m.addDoubleQuad(
+              [rIn * c0, 0, rIn * s0],
+              [rOut * c0, 0, rOut * s0],
+              [rOut * c1, 0, rOut * s1],
+              [rIn * c1, 0, rIn * s1],
+              ringCol, alpha, 0.0
+            );
+          }
+        }
+
+        addRing(2.15, 0.025, 0.28);
+        addRing(3.35, 0.030, 0.42);
+        addRing(4.35, 0.048, 0.78);
+
+        // Symmetrical cardinal tick marks on Left (-X), Rear (+Z), and Right (+X) sides of outer ring
+        for (const ang of [0, Math.PI * 0.5, Math.PI]) {
+          const cx = Math.cos(ang), cz = Math.sin(ang);
+          const px = -cz * 0.025, pz = cx * 0.025;
+          const r0 = 4.18, r1 = 4.58;
+          m.addDoubleQuad(
+            [r0 * cx - px, 0, r0 * cz - pz],
+            [r0 * cx + px, 0, r0 * cz + pz],
+            [r1 * cx + px, 0, r1 * cz + pz],
+            [r1 * cx - px, 0, r1 * cz - pz],
+            ringCol, 0.72, 0.0
+          );
+        }
+
+        // Front (-Z) bold directional arrow tip so top-down nose direction is unmistakable
+        m.addTri([-0.42, 0.005, -4.36], [0.42, 0.005, -4.36], [0, 0.005, -5.08], ringCol, 1.0, 0.0, [0, 1, 0]);
+        m.addTri([-0.42, 0.005, -4.36], [0, 0.005, -5.08], [0.42, 0.005, -4.36], ringCol, 1.0, 0.0, [0, -1, 0]);
+
+        return m;
+      }
+
+      // Build unit highlight beacon (halo ring + vertical riser column scaled per corner)
+      function buildBeaconMesh() {
+        const m = new MeshBuilder();
+        const col = [1.0, 1.0, 1.0];
+        const segs = 32;
+        const rIn = 0.44, rOut = 0.58;
+        for (let i = 0; i < segs; i++) {
+          const a0 = (i / segs) * Math.PI * 2;
+          const a1 = ((i + 1) / segs) * Math.PI * 2;
+          const c0 = Math.cos(a0), s0 = Math.sin(a0);
+          const c1 = Math.cos(a1), s1 = Math.sin(a1);
+          m.addDoubleQuad(
+            [rIn * c0, 0.01, rIn * s0],
+            [rOut * c0, 0.01, rOut * s0],
+            [rOut * c1, 0.01, rOut * s1],
+            [rIn * c1, 0.01, rIn * s1],
+            col, 0.85, 0.0
+          );
+        }
+        // Unit-height vertical prism from y=0 to y=1 at origin (scaled dynamically)
+        m.addBox(-0.045, 0.045, 0, 1, -0.045, 0.045, col, 0.78, 0.1);
+        return m;
+      }
+
+      // =========================================================================
+      // WebGL1 Renderer Setup
+      // =========================================================================
+      const canvas = document.getElementById('van-canvas');
+      const gl = canvas.getContext('webgl', { antialias: true, alpha: true, powerPreference: 'high-performance' });
+      const fallbackEl = document.getElementById('webgl-fallback');
+
+      let rendererReady = false;
+      let program = null;
+      let uniforms = {};
+      let attribs = {};
+      let meshes = {};
+
+      function uploadMesh(builder) {
+        const vbPos = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbPos);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(builder.pos), gl.STATIC_DRAW);
+
+        const vbNorm = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbNorm);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(builder.norm), gl.STATIC_DRAW);
+
+        const vbCol = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbCol);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(builder.col), gl.STATIC_DRAW);
+
+        const vbAlpha = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbAlpha);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(builder.alpha), gl.STATIC_DRAW);
+
+        const vbSpec = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbSpec);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(builder.spec), gl.STATIC_DRAW);
+
+        const ib = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+        const canUint32 = builder.vertCount > 65535 && (
+          (typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext) ||
+          Boolean(gl.getExtension('OES_element_index_uint'))
+        );
+        const idxArr = canUint32
+          ? new Uint32Array(builder.idx)
+          : new Uint16Array(builder.idx);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idxArr, gl.STATIC_DRAW);
+
+        return {
+          vbPos, vbNorm, vbCol, vbAlpha, vbSpec, ib,
+          count: builder.idx.length,
+          idxType: canUint32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT
+        };
+      }
+
+      function compileShader(type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+
+      if (gl) {
+        const vsSrc = `
+          attribute vec3 aPos;
+          attribute vec3 aNorm;
+          attribute vec3 aCol;
+          attribute float aAlpha;
+          attribute float aSpec;
+
+          uniform mat4 uMVP;
+          uniform mat4 uModel;
+
+          varying vec3 vWorldPos;
+          varying vec3 vNorm;
+          varying vec3 vCol;
+          varying float vAlpha;
+          varying float vSpec;
+
+          void main() {
+            vec4 wp = uModel * vec4(aPos, 1.0);
+            vWorldPos = wp.xyz;
+            vNorm = normalize(mat3(uModel[0].xyz, uModel[1].xyz, uModel[2].xyz) * aNorm);
+            vCol = aCol;
+            vAlpha = aAlpha;
+            vSpec = aSpec;
+            gl_Position = uMVP * vec4(aPos, 1.0);
+          }
+        `;
+
+        const fsSrc = `
+          precision mediump float;
+          varying vec3 vWorldPos;
+          varying vec3 vNorm;
+          varying vec3 vCol;
+          varying float vAlpha;
+          varying float vSpec;
+
+          uniform vec3 uCamPos;
+          uniform vec3 uTint;
+          uniform float uUnlit;
+
+          void main() {
+            vec3 baseCol = vCol * uTint;
+            if (uUnlit > 0.5) {
+              gl_FragColor = vec4(baseCol, vAlpha);
+              return;
+            }
+            vec3 N = normalize(vNorm);
+            vec3 V = normalize(uCamPos - vWorldPos);
+            vec3 L1 = normalize(vec3(0.45, 0.85, 0.35));
+            vec3 L2 = normalize(vec3(-0.65, 0.35, -0.55));
+
+            float hemi = 0.42 + 0.24 * clamp(N.y, -1.0, 1.0);
+            float diff1 = max(dot(N, L1), 0.0) * 0.62;
+            float diff2 = max(dot(N, L2), 0.0) * 0.24;
+
+            vec3 H = normalize(L1 + V);
+            float specPow = mix(10.0, 64.0, vSpec);
+            float spec = pow(max(dot(N, H), 0.0), specPow) * vSpec * 0.55;
+
+            float fresnel = pow(1.0 - max(dot(N, V), 0.0), 3.0) * vSpec * 0.25;
+            vec3 lit = baseCol * (hemi + diff1 + diff2) + vec3(0.88, 0.94, 1.0) * (spec + fresnel);
+            gl_FragColor = vec4(lit, vAlpha);
+          }
+        `;
+
+        const vs = compileShader(gl.VERTEX_SHADER, vsSrc);
+        const fs = compileShader(gl.FRAGMENT_SHADER, fsSrc);
+        if (vs && fs) {
+          program = gl.createProgram();
+          gl.attachShader(program, vs);
+          gl.attachShader(program, fs);
+          gl.linkProgram(program);
+          if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            gl.useProgram(program);
+            attribs = {
+              pos: gl.getAttribLocation(program, 'aPos'),
+              norm: gl.getAttribLocation(program, 'aNorm'),
+              col: gl.getAttribLocation(program, 'aCol'),
+              alpha: gl.getAttribLocation(program, 'aAlpha'),
+              spec: gl.getAttribLocation(program, 'aSpec')
+            };
+            uniforms = {
+              mvp: gl.getUniformLocation(program, 'uMVP'),
+              model: gl.getUniformLocation(program, 'uModel'),
+              camPos: gl.getUniformLocation(program, 'uCamPos'),
+              tint: gl.getUniformLocation(program, 'uTint'),
+              unlit: gl.getUniformLocation(program, 'uUnlit')
+            };
+            meshes = {
+              van: null,
+              deck: uploadMesh(buildTiltedDeckMesh()),
+              grid: uploadMesh(buildLevelGridMesh()),
+              beacon: uploadMesh(buildBeaconMesh())
+            };
+            fetch('ProMaster_2015_White_meshopt.glb')
+              .then((r) => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.arrayBuffer();
+              })
+              .then((buf) => buildGlbVanMesh(buf))
+              .then((meshData) => {
+                meshes.van = uploadMesh(meshData);
+              })
+              .catch((err) => console.error('Failed to load van GLB:', err));
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            gl.enable(gl.CULL_FACE);
+            gl.cullFace(gl.BACK);
+            rendererReady = true;
+          }
+        }
+      }
+
+      if (!rendererReady) {
+        fallbackEl.hidden = false;
+      }
+
+      function drawMesh(mesh, mvp, model, tint, unlit, cull = true, depthWrite = true) {
+        if (cull) gl.enable(gl.CULL_FACE);
+        else gl.disable(gl.CULL_FACE);
+        gl.depthMask(depthWrite);
+
+        gl.uniformMatrix4fv(uniforms.mvp, false, mvp);
+        gl.uniformMatrix4fv(uniforms.model, false, model);
+        gl.uniform3fv(uniforms.tint, tint);
+        gl.uniform1f(uniforms.unlit, unlit ? 1.0 : 0.0);
+
+        const bindAttr = (buf, loc, size) => {
+          gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+          gl.enableVertexAttribArray(loc);
+          gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+        };
+        bindAttr(mesh.vbPos, attribs.pos, 3);
+        bindAttr(mesh.vbNorm, attribs.norm, 3);
+        bindAttr(mesh.vbCol, attribs.col, 3);
+        bindAttr(mesh.vbAlpha, attribs.alpha, 1);
+        bindAttr(mesh.vbSpec, attribs.spec, 1);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.ib);
+        gl.drawElements(gl.TRIANGLES, mesh.count, mesh.idxType, 0);
+      }
+
+      // =========================================================================
+      // Application State & DOM Cache
+      // =========================================================================
+      const el = {
+        connPill: document.getElementById('conn-pill'),
+        connLabel: document.getElementById('conn-label'),
+        camModePill: document.getElementById('cam-mode-pill'),
+        autoCamBtn: document.getElementById('auto-cam-btn'),
+        movingPill: document.getElementById('moving-pill'),
+        lowestTag: document.getElementById('lowest-tag'),
+        statusTitle: document.getElementById('status-title'),
+        statusSub: document.getElementById('status-sub'),
+        wheelDims: document.getElementById('wheel-dims'),
+        pitchVal: document.getElementById('pitch-val'),
+        pitchDir: document.getElementById('pitch-dir'),
+        rollVal: document.getElementById('roll-val'),
+        rollDir: document.getElementById('roll-dir'),
+        wheels: {
+          fl: { box: document.getElementById('wheel-fl'), val: document.getElementById('lift-fl'), x: -0.885, z: -2.23, name: 'Front-Driver' },
+          fr: { box: document.getElementById('wheel-fr'), val: document.getElementById('lift-fr'), x:  0.885, z: -2.23, name: 'Front-Pass' },
+          rl: { box: document.getElementById('wheel-rl'), val: document.getElementById('lift-rl'), x: -0.885, z:  1.81, name: 'Rear-Driver' },
+          rr: { box: document.getElementById('wheel-rr'), val: document.getElementById('lift-rr'), x:  0.885, z:  1.81, name: 'Rear-Pass' }
+        },
+        calDialog: document.getElementById('cal-dialog'),
+        calFeedback: document.getElementById('cal-feedback'),
+        demoPanel: document.getElementById('demo-panel'),
+        demoPitch: document.getElementById('demo-pitch'),
+        demoRoll: document.getElementById('demo-roll'),
+        demoPitchOut: document.getElementById('demo-pitch-out'),
+        demoRollOut: document.getElementById('demo-roll-out'),
+        demoMovingBtn: document.getElementById('demo-moving-btn')
+      };
+
+      const state = {
+        pitch: isDemo ? parseFloat(query.get('pitch') ?? '1.1') : NaN,
+        roll:  isDemo ? parseFloat(query.get('roll') ?? '3.2') : NaN,
+        moving: false,
+        wheelbaseIn: DEFAULT_WHEELBASE_IN,
+        trackWidthIn: DEFAULT_TRACK_WIDTH_IN,
+        smoothPitch: 0,
+        smoothRoll: 0,
+        cameraMode: 'auto', // 'auto' | 'manual'
+        camAz: 0,
+        camElev: 84 * DEG2RAD,
+        camDist: 10.6,
+        userZoomScale: 1.0,
+        lowestKey: null,
+        maxLiftIn: 0
+      };
+
+      if (isDemo && Number.isNaN(state.pitch)) state.pitch = 1.1;
+      if (isDemo && Number.isNaN(state.roll)) state.roll = 3.2;
+
+      function fmtDeg(deg) {
+        if (Math.abs(deg) < 0.05) return '0.0°';
+        return (deg >= 0 ? '+' : '') + deg.toFixed(1) + '°';
+      }
+
+      function severityFor(deg) {
+        const a = Math.abs(deg);
+        if (a <= 1.0) return { hex: '#10E79D', rgb: '16, 231, 157', vec: [0.06, 0.91, 0.62] };
+        if (a <= 3.0) return { hex: '#F59E0B', rgb: '245, 158, 11', vec: [0.96, 0.62, 0.04] };
+        return               { hex: '#EF4444', rgb: '239, 68, 68',  vec: [0.94, 0.27, 0.27] };
+      }
+
+      function updateTelemetryUI() {
+        el.movingPill.hidden = !state.moving;
+
+        const p = state.pitch;
+        const r = state.roll;
+        if (Number.isNaN(p) || Number.isNaN(r)) {
+          el.pitchVal.textContent = '--.-°';
+          el.rollVal.textContent = '--.-°';
+          el.pitchDir.textContent = 'Waiting';
+          el.rollDir.textContent = 'Waiting';
+          el.statusTitle.textContent = 'Waiting for IMU';
+          el.statusSub.textContent = 'Reading orientation stream...';
+          el.lowestTag.textContent = 'Connecting...';
+          return;
+        }
+
+        const pSev = severityFor(p);
+        const rSev = severityFor(r);
+        el.pitchVal.textContent = fmtDeg(p);
+        el.pitchVal.style.color = pSev.hex;
+        el.pitchDir.textContent = Math.abs(p) <= 1.0 ? 'Level' : (p > 0 ? 'Front High' : 'Rear High');
+
+        el.rollVal.textContent = fmtDeg(r);
+        el.rollVal.style.color = rSev.hex;
+        el.rollDir.textContent = Math.abs(r) <= 1.0 ? 'Level' : (r > 0 ? 'Driver High' : 'Pass. High');
+
+        const maxTilt = Math.max(Math.abs(p), Math.abs(r));
+        const overall = severityFor(maxTilt);
+        document.documentElement.style.setProperty('--col-accent', overall.hex);
+        document.documentElement.style.setProperty('--col-accent-rgb', overall.rgb);
+
+        // Compute physical 4-wheel lift in inches (1x scale)
+        const wbIn = state.wheelbaseIn || DEFAULT_WHEELBASE_IN;
+        const trIn = state.trackWidthIn || DEFAULT_TRACK_WIDTH_IN;
+        if (el.wheelDims) {
+          const fmtDim = (v) => Number.isInteger(v) ? String(v) : v.toFixed(1);
+          el.wheelDims.textContent = `${fmtDim(wbIn)}″ × ${fmtDim(trIn)}″`;
+        }
+        const halfWbIn = wbIn * 0.5;
+        const halfTrIn = trIn * 0.5;
+        const pRad = p * DEG2RAD;
+        const rRad = r * DEG2RAD;
+        const heights = {
+          fl:  halfTrIn * Math.sin(rRad) + halfWbIn * Math.sin(pRad),
+          fr: -halfTrIn * Math.sin(rRad) + halfWbIn * Math.sin(pRad),
+          rl:  halfTrIn * Math.sin(rRad) - halfWbIn * Math.sin(pRad),
+          rr: -halfTrIn * Math.sin(rRad) - halfWbIn * Math.sin(pRad)
+        };
+        const hMax = Math.max(heights.fl, heights.fr, heights.rl, heights.rr);
+
+        let lowestKey = 'fl';
+        let maxLift = -1;
+        for (const key of ['fl', 'fr', 'rl', 'rr']) {
+          const lift = Math.max(0, hMax - heights[key]);
+          if (lift > maxLift) {
+            maxLift = lift;
+            lowestKey = key;
+          }
+          const cell = el.wheels[key];
+          cell.box.classList.remove('lowest', 'severe', 'zero');
+          if (lift < 0.25) {
+            cell.val.textContent = '0.0″';
+            cell.box.classList.add('zero');
+          } else {
+            cell.val.textContent = '+' + lift.toFixed(1) + '″';
+          }
+        }
+
+        state.lowestKey = maxTilt > DEADZONE_DEG ? lowestKey : null;
+        state.maxLiftIn = maxLift;
+
+        if (maxTilt > DEADZONE_DEG) {
+          const lowCell = el.wheels[lowestKey];
+          lowCell.box.classList.add('lowest');
+          if (maxTilt > 3.0) lowCell.box.classList.add('severe');
+          el.lowestTag.textContent = `Lowest: ${lowCell.name} (+${maxLift.toFixed(1)}″)`;
+        } else {
+          el.lowestTag.textContent = 'Level Dead-Zone (±0.5°) · Top-Down';
+        }
+
+        if (maxTilt <= 1.0) {
+          el.statusTitle.textContent = 'Level';
+          el.statusSub.textContent = 'Within ±1.0° — Ready for camp';
+          if (maxTilt > DEADZONE_DEG) {
+            el.lowestTag.textContent = `Within ±1.0° · ${el.wheels[lowestKey].name} (+${maxLift.toFixed(1)}″)`;
+          }
+        } else {
+          el.statusTitle.textContent = maxTilt <= 3.0 ? 'Adjust Level' : 'Off Level';
+          const lowName = el.wheels[lowestKey].name;
+          el.statusSub.textContent = `Raise ${lowName} ${maxLift.toFixed(1)}″ to level`;
+        }
+      }
+
+      // =========================================================================
+      // Animation Loop (Smooth Tilt Interpolation + Lowest-Corner Auto Camera)
+      // =========================================================================
+      let lastTime = performance.now();
+
+      function syncCanvasSize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+        const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+        if (canvas.width !== w || canvas.height !== h) {
+          canvas.width = w;
+          canvas.height = h;
+        }
+        return { w, h, aspect: w / h };
+      }
+
+      function renderFrame(now) {
+        const dt = clamp((now - lastTime) * 0.001, 0.001, 0.1);
+        lastTime = now;
+
+        const targetPitch = Number.isNaN(state.pitch) ? 0 : state.pitch;
+        const targetRoll  = Number.isNaN(state.roll)  ? 0 : state.roll;
+
+        const tiltAlpha = 1 - Math.exp(-dt / 0.14);
+        state.smoothPitch = lerp(state.smoothPitch, targetPitch, tiltAlpha);
+        state.smoothRoll  = lerp(state.smoothRoll, targetRoll, tiltAlpha);
+
+        const tiltMag = Math.hypot(state.smoothPitch, state.smoothRoll);
+        const tTilt = smoothstep(DEADZONE_DEG, FULL_TILT_DEG, tiltMag);
+
+        const size = syncCanvasSize();
+        // Ensure full 6.36m ProMaster and level ring remain cleanly inside both frustum axes
+        const halfFovY = 19 * DEG2RAD;
+        const sinHalfY = Math.sin(halfFovY);
+        const tanHalfX = Math.tan(halfFovY) * size.aspect;
+        const sinHalfX = tanHalfX / Math.hypot(1, tanHalfX);
+        const fitRadius = lerp(5.05, 3.65, tTilt);
+        const framedDist = fitRadius / Math.min(sinHalfY, sinHalfX);
+
+        if (state.cameraMode === 'auto') {
+          const targetElev = lerp(CAM_TOP_DOWN_ELEV_DEG * DEG2RAD, CAM_MIN_TILT_ELEV_DEG * DEG2RAD, tTilt);
+          const targetDist = framedDist * state.userZoomScale;
+          let targetAz = 0;
+          if (tiltMag > DEADZONE_DEG) {
+            const rawAz = Math.atan2(state.smoothRoll, state.smoothPitch);
+            const azBlend = smoothstep(DEADZONE_DEG, DEADZONE_DEG + 0.65, tiltMag);
+            targetAz = wrapAngle(rawAz) * azBlend;
+          }
+
+          const camAlpha = 1 - Math.exp(-dt / 0.42);
+          state.camAz   = wrapAngle(state.camAz + wrapAngle(targetAz - state.camAz) * camAlpha);
+          state.camElev = lerp(state.camElev, targetElev, camAlpha);
+          state.camDist = lerp(state.camDist, targetDist, camAlpha);
+        } else {
+          const targetDist = framedDist * state.userZoomScale;
+          state.camDist = lerp(state.camDist, targetDist, 1 - Math.exp(-dt / 0.25));
+        }
+
+        if (state.cameraMode === 'auto') {
+          if (tiltMag <= DEADZONE_DEG) {
+            el.camModePill.textContent = 'Auto Top-Down';
+          } else if (state.lowestKey) {
+            el.camModePill.textContent = `Auto · ${el.wheels[state.lowestKey].name}`;
+          }
+          el.autoCamBtn.hidden = true;
+        } else {
+          el.camModePill.textContent = 'Manual Orbit';
+          el.autoCamBtn.hidden = false;
+        }
+
+        if (rendererReady) {
+          gl.viewport(0, 0, size.w, size.h);
+          gl.clearColor(0, 0, 0, 0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          const targetY = lerp(CAM_TOP_DOWN_TARGET_Y, CAM_MIN_TILT_TARGET_Y, tTilt);
+          const eye = [
+            state.camDist * Math.cos(state.camElev) * Math.sin(state.camAz),
+            targetY + state.camDist * Math.sin(state.camElev),
+            state.camDist * Math.cos(state.camElev) * Math.cos(state.camAz)
+          ];
+          const target = [0, targetY, 0];
+          const view = mat4LookAt(eye, target, [0, 1, 0]);
+          const proj = mat4Perspective(38 * DEG2RAD, size.aspect, 0.2, 60.0);
+          const vp = mat4Mul(proj, view);
+
+          gl.uniform3fv(uniforms.camPos, eye);
+
+          const visPitch = clamp(state.smoothPitch * EXAGGERATION, -MAX_VIS_TILT_DEG, MAX_VIS_TILT_DEG) * DEG2RAD;
+          const visRoll  = clamp(state.smoothRoll  * EXAGGERATION, -MAX_VIS_TILT_DEG, MAX_VIS_TILT_DEG) * DEG2RAD;
+          const mVan = mat4Tilt(visPitch, visRoll);
+          const mIdent = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+          lastCam = { eye, view, aspect: size.aspect, mVan };
+          let mVanDraw = mVan;
+          if (activeHonk || now < honkUntil) {
+            mVanDraw = new Float32Array(mVan);
+            mVanDraw[12] += 0.012 * Math.sin(now * 0.085);
+            mVanDraw[13] += 0.022 * Math.abs(Math.sin(now * 0.036));
+            mVanDraw[14] += 0.008 * Math.cos(now * 0.071);
+          }
+
+          // 1. 2015 RAM ProMaster 159" EXT High Roof (GLB)
+          if (meshes.van) {
+            drawMesh(meshes.van, mat4Mul(vp, mVanDraw), mVanDraw, [1, 1, 1], false, false, true);
+          }
+
+          // 2. Translucent tilted terrain deck under tires
+          drawMesh(meshes.deck, mat4Mul(vp, mVan), mVan, [1, 1, 1], true, false, false);
+
+          // 3. Stationary true-level reference reticle at y = 0
+          const maxTilt = Math.max(Math.abs(state.smoothPitch), Math.abs(state.smoothRoll));
+          const gridSev = severityFor(Number.isNaN(state.pitch) ? 0 : maxTilt);
+          drawMesh(meshes.grid, vp, mIdent, gridSev.vec, true, false, false);
+
+          // 4. Lowest corner pulsing beacon & vertical lift column to horizontal y = 0 plane
+          if (!Number.isNaN(state.pitch) && state.lowestKey && tiltMag > DEADZONE_DEG) {
+            const w = el.wheels[state.lowestKey];
+            const worldCorner = transformPoint(mVan, w.x, 0, w.z);
+            const drop = Math.max(0.06, -worldCorner[1]);
+            const pulse = 0.85 + 0.15 * Math.sin(now * 0.0055);
+            const mBeacon = new Float32Array([
+              pulse, 0, 0, 0,
+              0, drop, 0, 0,
+              0, 0, pulse, 0,
+              worldCorner[0], worldCorner[1], worldCorner[2], 1
+            ]);
+            drawMesh(meshes.beacon, mat4Mul(vp, mBeacon), mBeacon, gridSev.vec, true, false, false);
+          }
+        }
+
+        requestAnimationFrame(renderFrame);
+      }
+
+      requestAnimationFrame(renderFrame);
+
+      // =========================================================================
+      // Interactive Pointer Drag Orbit + Pinch Zoom + Auto Snap-Back
+      // =========================================================================
+      const pointers = new Map();
+      let lastPinchDist = null, lastCam = null, tapStart = null, lastTouchTap = null, audioCtx = null, honkUntil = 0;
+      let activeHonk = null, holdTimer = 0, burstTimer = 0, seqTimers = [], honkStage = 0, lastHonkTap = 0;
+
+      function unlockAudio() {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+        return audioCtx;
+      }
+
+      function stopHonk() {
+        clearTimeout(burstTimer);
+        burstTimer = 0;
+        if (!activeHonk) return;
+        const { ctx, g, oscs } = activeHonk;
+        activeHonk = null;
+        const t = ctx.currentTime;
+        g.gain.cancelScheduledValues(t);
+        g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+        oscs.forEach((o) => { try { o.stop(t + 0.055); } catch (_) {} });
+      }
+
+      function startHonk(durationMs) {
+        clearTimeout(burstTimer);
+        if (activeHonk) {
+          if (durationMs) burstTimer = setTimeout(stopHonk, durationMs);
+          return;
+        }
+        honkUntil = performance.now() + (durationMs || 180);
+        if (navigator.vibrate) try { navigator.vibrate(18); } catch (_) {}
+        const ctx = unlockAudio();
+        if (!ctx) return;
+        const t = ctx.currentTime;
+        const flt = ctx.createBiquadFilter();
+        flt.type = 'lowpass';
+        flt.frequency.setValueAtTime(1850, t);
+        flt.Q.value = 1.6;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.24, t + 0.015);
+        flt.connect(g);
+        g.connect(ctx.destination);
+        const oscs = [405, 505].map((f) => {
+          const o = ctx.createOscillator();
+          o.type = 'sawtooth';
+          o.frequency.setValueAtTime(f * 0.98, t);
+          o.frequency.linearRampToValueAtTime(f, t + 0.018);
+          o.connect(flt);
+          o.start(t);
+          return o;
+        });
+        activeHonk = { ctx, g, oscs };
+        if (durationMs) burstTimer = setTimeout(stopHonk, durationMs);
+      }
+
+      function clearSeq() {
+        seqTimers.forEach(clearTimeout);
+        seqTimers = [];
+      }
+
+      function triggerTapHonk() {
+        const now = performance.now();
+        honkStage = (now - lastHonkTap <= 3000 && honkStage < 3) ? honkStage + 1 : 1;
+        lastHonkTap = now;
+        clearSeq();
+        stopHonk();
+        const seq = honkStage === 1 ? [[0, 180]]
+          : honkStage === 2 ? [[0, 130], [210, 130]]
+          : [[0, 120], [195, 120], [390, 1500]];
+        seq.forEach(([delay, dur]) => {
+          if (delay === 0) startHonk(dur);
+          else seqTimers.push(setTimeout(() => startHonk(dur), delay));
+        });
+      }
+
+      function isTapOnVan(cx, cy) {
+        if (!lastCam) return false;
+        const rect = canvas.getBoundingClientRect();
+        const nx = ((cx - rect.left) / rect.width) * 2 - 1;
+        const ny = 1 - ((cy - rect.top) / rect.height) * 2;
+        const { eye, view, aspect, mVan } = lastCam;
+        const th = Math.tan(19 * DEG2RAD), rx = nx * aspect * th, ry = ny * th;
+        const dx = view[0] * rx + view[1] * ry - view[2];
+        const dy = view[4] * rx + view[5] * ry - view[6];
+        const dz = view[8] * rx + view[9] * ry - view[10];
+        const toLocal = (v) => [
+          mVan[0] * v[0] + mVan[1] * v[1] + mVan[2] * v[2],
+          mVan[4] * v[0] + mVan[5] * v[1] + mVan[6] * v[2],
+          mVan[8] * v[0] + mVan[9] * v[1] + mVan[10] * v[2]
+        ];
+        const ro = toLocal(eye), rd = toLocal([dx, dy, dz]);
+        const bMin = [-1.15, 0, -3.25], bMax = [1.15, 2.7, 3.25];
+        let tmin = -Infinity, tmax = Infinity;
+        for (let i = 0; i < 3; i++) {
+          if (Math.abs(rd[i]) < 1e-6) {
+            if (ro[i] < bMin[i] || ro[i] > bMax[i]) return false;
+          } else {
+            let t1 = (bMin[i] - ro[i]) / rd[i], t2 = (bMax[i] - ro[i]) / rd[i];
+            if (t1 > t2) [t1, t2] = [t2, t1];
+            tmin = Math.max(tmin, t1);
+            tmax = Math.min(tmax, t2);
+            if (tmin > tmax) return false;
+          }
+        }
+        return tmax > 0;
+      }
+
+      canvas.addEventListener('pointerdown', (e) => {
+        canvas.setPointerCapture(e.pointerId);
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 1) {
+          const onVan = isTapOnVan(e.clientX, e.clientY);
+          tapStart = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false, multi: false, onVan, held: false };
+          unlockAudio();
+          clearTimeout(holdTimer);
+          if (onVan) {
+            holdTimer = setTimeout(() => {
+              if (tapStart && !tapStart.moved && !tapStart.multi) {
+                tapStart.held = true;
+                clearSeq();
+                startHonk();
+              }
+            }, 180);
+          }
+        } else {
+          clearTimeout(holdTimer);
+          if (tapStart) {
+            tapStart.multi = true;
+            if (tapStart.held) stopHonk();
+          }
+        }
+        if (pointers.size === 2) {
+          const pts = [...pointers.values()];
+          lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        }
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!pointers.has(e.pointerId)) return;
+        const prev = pointers.get(e.pointerId);
+        const cur = { x: e.clientX, y: e.clientY };
+        pointers.set(e.pointerId, cur);
+        if (tapStart && Math.hypot(cur.x - tapStart.x, cur.y - tapStart.y) > 8) {
+          tapStart.moved = true;
+          clearTimeout(holdTimer);
+        }
+
+        if (pointers.size === 1) {
+          if (tapStart && tapStart.held) return;
+          const dx = cur.x - prev.x;
+          const dy = cur.y - prev.y;
+          if (Math.hypot(dx, dy) > 1.5) {
+            state.cameraMode = 'manual';
+            state.camAz = wrapAngle(state.camAz - dx * 0.0085);
+            state.camElev = clamp(state.camElev + dy * 0.0075, CAM_MANUAL_MIN_ELEV_DEG * DEG2RAD, 86 * DEG2RAD);
+          }
+        } else if (pointers.size === 2) {
+          const pts = [...pointers.values()];
+          const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          if (lastPinchDist && dist > 10) {
+            state.userZoomScale = clamp(state.userZoomScale * (lastPinchDist / dist), 0.62, 1.75);
+          }
+          lastPinchDist = dist;
+        }
+      });
+
+      const preventTouchDefault = (e) => e.preventDefault();
+      canvas.addEventListener('touchstart', preventTouchDefault, { passive: false });
+      canvas.addEventListener('touchmove', preventTouchDefault, { passive: false });
+      canvas.addEventListener('touchend', preventTouchDefault, { passive: false });
+      canvas.addEventListener('gesturestart', preventTouchDefault, { passive: false });
+      canvas.addEventListener('gesturechange', preventTouchDefault, { passive: false });
+      canvas.addEventListener('contextmenu', preventTouchDefault);
+      canvas.addEventListener('selectstart', preventTouchDefault);
+
+      const endPointer = (e) => {
+        clearTimeout(holdTimer);
+        const now = performance.now();
+        if (tapStart && tapStart.held) {
+          stopHonk();
+          lastTouchTap = null;
+        } else if (e.type === 'pointerup' && pointers.size === 1 && tapStart && !tapStart.moved && !tapStart.multi) {
+          if (tapStart.onVan && now - tapStart.t < 350) {
+            triggerTapHonk();
+          }
+          if (e.pointerType !== 'mouse' && now - tapStart.t < 350) {
+            if (lastTouchTap && now - lastTouchTap.t < 320 && Math.hypot(e.clientX - lastTouchTap.x, e.clientY - lastTouchTap.y) < 32) {
+              lastTouchTap = null;
+              resetAutoCamera();
+            } else {
+              lastTouchTap = { t: now, x: e.clientX, y: e.clientY };
+            }
+          }
+        } else if (tapStart && (tapStart.moved || tapStart.multi)) {
+          lastTouchTap = null;
+        }
+        pointers.delete(e.pointerId);
+        if (pointers.size < 2) lastPinchDist = null;
+        if (pointers.size === 0) tapStart = null;
+      };
+      canvas.addEventListener('pointerup', endPointer);
+      canvas.addEventListener('pointercancel', endPointer);
+
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        state.userZoomScale = clamp(state.userZoomScale * (1 + e.deltaY * 0.001), 0.62, 1.75);
+      }, { passive: false });
+
+      function resetAutoCamera() {
+        state.cameraMode = 'auto';
+        state.userZoomScale = 1.0;
+        if (navigator.vibrate) try { navigator.vibrate(10); } catch (_) {}
+      }
+
+      canvas.addEventListener('dblclick', resetAutoCamera);
+      el.autoCamBtn.addEventListener('click', resetAutoCamera);
+
+      // =========================================================================
+      // Brand Version Toggle + Calibration Native <dialog>
+      // =========================================================================
+      const brandBtn = document.getElementById('brand-btn');
+      const toggleBrandVersion = () => {
+        brandBtn.classList.toggle('show-version');
+        if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {}
+      };
+      brandBtn.addEventListener('click', toggleBrandVersion);
+      brandBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleBrandVersion();
+        }
+      });
+
+      document.getElementById('open-cal-btn').addEventListener('click', () => {
+        el.calFeedback.textContent = '';
+        el.calDialog.showModal();
+      });
+
+      document.getElementById('btn-cal-close').addEventListener('click', () => {
+        el.calDialog.close();
+      });
+
+      async function pressButton(entityName, okMsg) {
+        if (isDemo) {
+          el.calFeedback.textContent = `Demo mode: ${okMsg}`;
+          if (entityName.includes('Calibrate')) {
+            state.pitch = 0; state.roll = 0;
+            el.demoPitch.value = '0'; el.demoRoll.value = '0';
+            el.demoPitchOut.textContent = '0.0°'; el.demoRollOut.textContent = '0.0°';
+            updateTelemetryUI();
+          }
+          return;
+        }
+        el.calFeedback.style.color = '#94A3B8';
+        el.calFeedback.textContent = 'Sending command...';
+        try {
+          const res = await fetch(`${basePath}button/${encodeURIComponent(entityName)}/press`, { method: 'POST' });
+          if (res.ok) {
+            el.calFeedback.style.color = '#10E79D';
+            el.calFeedback.textContent = okMsg;
+          } else {
+            el.calFeedback.style.color = '#EF4444';
+            el.calFeedback.textContent = `Request failed (${res.status})`;
+          }
+        } catch (err) {
+          el.calFeedback.style.color = '#EF4444';
+          el.calFeedback.textContent = 'Network error reaching device';
+        }
+      }
+
+      document.getElementById('btn-cal-save').addEventListener('click', () => {
+        pressButton('Calibrate Van Level', 'Saved level zero reference to NVS');
+      });
+      document.getElementById('btn-cal-reset').addEventListener('click', () => {
+        pressButton('Reset Van Level Calibration', 'Reset IMU calibration to factory default');
+      });
+
+      // =========================================================================
+      // Demo Mode Controls (?demo=1)
+      // =========================================================================
+      if (isDemo) {
+        el.demoPanel.hidden = false;
+        el.connPill.className = 'conn-pill demo';
+        el.connLabel.textContent = 'Demo';
+
+        const syncSliders = () => {
+          el.demoPitch.value = String(state.pitch);
+          el.demoRoll.value = String(state.roll);
+          el.demoPitchOut.textContent = fmtDeg(state.pitch);
+          el.demoRollOut.textContent = fmtDeg(state.roll);
+          updateTelemetryUI();
+        };
+
+        el.demoPitch.addEventListener('input', () => {
+          state.pitch = parseFloat(el.demoPitch.value);
+          el.demoPitchOut.textContent = fmtDeg(state.pitch);
+          updateTelemetryUI();
+        });
+        el.demoRoll.addEventListener('input', () => {
+          state.roll = parseFloat(el.demoRoll.value);
+          el.demoRollOut.textContent = fmtDeg(state.roll);
+          updateTelemetryUI();
+        });
+
+        document.querySelectorAll('.demo-btn[data-p]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.pitch = parseFloat(btn.dataset.p);
+            state.roll = parseFloat(btn.dataset.r);
+            syncSliders();
+          });
+        });
+
+        el.demoMovingBtn.addEventListener('click', () => {
+          state.moving = !state.moving;
+          el.demoMovingBtn.textContent = `Moving: ${state.moving ? 'On' : 'Off'}`;
+          updateTelemetryUI();
+        });
+
+        syncSliders();
+      } else {
+        updateTelemetryUI();
+      }
+
+      // =========================================================================
+      // ESPHome SSE Stream + Watchdog + iOS Background / WakeLock Handling
+      // =========================================================================
+      let sseSource = null;
+      let watchdogTimer = null;
+      let reconnectTimer = null;
+      let backoffMs = 1000;
+      let wakeLock = null;
+
+      function setConnState(cls, text) {
+        el.connPill.className = `conn-pill ${cls}`;
+        el.connLabel.textContent = text;
+      }
+
+      function clearTimers() {
+        if (watchdogTimer) { clearTimeout(watchdogTimer); watchdogTimer = null; }
+        if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      }
+
+      function bumpWatchdog() {
+        if (watchdogTimer) clearTimeout(watchdogTimer);
+        watchdogTimer = setTimeout(() => {
+          closeSSE();
+          scheduleReconnect();
+        }, 42000);
+      }
+
+      function closeSSE() {
+        clearTimers();
+        if (sseSource) {
+          try { sseSource.close(); } catch (_) {}
+          sseSource = null;
+        }
+      }
+
+      function scheduleReconnect() {
+        if (isDemo || document.visibilityState !== 'visible') return;
+        setConnState('warn', 'Reconnecting');
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(() => {
+          backoffMs = Math.min(backoffMs * 2, 6000);
+          connectSSE();
+        }, backoffMs);
+      }
+
+      function handleEntityEvent(raw) {
+        bumpWatchdog();
+        let data;
+        try {
+          data = JSON.parse(raw.data);
+        } catch (_) {
+          return;
+        }
+        if (!data || !data.id) return;
+
+        if (data.id === 'sensor/Van Pitch' || data.id === 'sensor-van_pitch') {
+          const val = parseFloat(data.value);
+          state.pitch = Number.isNaN(val) ? NaN : val;
+          updateTelemetryUI();
+        } else if (data.id === 'sensor/Van Roll' || data.id === 'sensor-van_roll') {
+          const val = parseFloat(data.value);
+          state.roll = Number.isNaN(val) ? NaN : val;
+          updateTelemetryUI();
+        } else if (data.id === 'binary_sensor/Van Moving' || data.id === 'binary_sensor-van_moving') {
+          state.moving = Boolean(data.value);
+          updateTelemetryUI();
+        } else if (data.id === 'number/Wheelbase' || data.id === 'number-wheelbase') {
+          const val = parseFloat(data.value);
+          if (Number.isFinite(val) && val > 0) {
+            state.wheelbaseIn = val;
+            updateTelemetryUI();
+          }
+        } else if (data.id === 'number/Track Width' || data.id === 'number-track_width') {
+          const val = parseFloat(data.value);
+          if (Number.isFinite(val) && val > 0) {
+            state.trackWidthIn = val;
+            updateTelemetryUI();
+          }
+        }
+      }
+
+      function connectSSE() {
+        if (isDemo || document.visibilityState !== 'visible') return;
+        closeSSE();
+        setConnState('', 'Connecting');
+
+        const src = new EventSource(`${basePath}events`);
+        sseSource = src;
+        bumpWatchdog();
+
+        src.onopen = () => {
+          backoffMs = 1000;
+          setConnState('live', 'Live');
+          bumpWatchdog();
+        };
+
+        src.addEventListener('state', handleEntityEvent);
+        src.addEventListener('state_detail_all', handleEntityEvent);
+        src.addEventListener('ping', bumpWatchdog);
+
+        src.onerror = () => {
+          if (sseSource === src) {
+            closeSSE();
+            scheduleReconnect();
+          }
+        };
+      }
+
+      async function requestWakeLock() {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+        } catch (_) {}
+      }
+
+      function releaseWakeLock() {
+        if (wakeLock) {
+          try { wakeLock.release(); } catch (_) {}
+          wakeLock = null;
+        }
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          if (!isDemo) connectSSE();
+          requestWakeLock();
+        } else {
+          clearTimeout(holdTimer);
+          clearSeq();
+          stopHonk();
+          if (!isDemo) {
+            closeSSE();
+            setConnState('warn', 'Paused');
+          }
+          releaseWakeLock();
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        clearTimeout(holdTimer);
+        clearSeq();
+        stopHonk();
+        if (!isDemo) closeSSE();
+        releaseWakeLock();
+      });
+
+      window.addEventListener('pageshow', () => {
+        if (document.visibilityState === 'visible') {
+          if (!isDemo && !sseSource) connectSSE();
+          requestWakeLock();
+        }
+      });
+
+      if (!isDemo && document.visibilityState === 'visible') {
+        connectSSE();
+        requestWakeLock();
+      }
+    })();
+  </script>
+</body>
+
+</html>

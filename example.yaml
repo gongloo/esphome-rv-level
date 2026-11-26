@@ -1,0 +1,55 @@
+# ==============================================================================
+# ESPHome RV Level - Standalone Example Configuration
+# ==============================================================================
+
+packages:
+  rv_level: !include rv-level.yaml
+
+substitutions:
+  name: "rv-level"
+  friendly_name: "RV Level"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  comment: "3D RV/Campervan leveling assistant with LSM6DSOX IMU and PWA"
+  min_version: 2026.11.0
+  project:
+    name: "gongloo.rv-level"
+    version: "1.0.0"
+
+esp32:
+  board: lolin_c3_mini
+  variant: esp32c3
+  framework:
+    type: esp-idf
+
+wifi:
+  reboot_timeout: 0s
+  output_power: 8.5dB
+  ap:
+    ssid: "${friendly_name} Fallback"
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 3
+  local: true
+  log: false
+  ota: false
+
+api:
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+
+logger:
+  level: INFO
+
+i2c:
+  sda: GPIO8
+  scl: GPIO10
+  scan: true
+  frequency: 400kHz
